@@ -31,6 +31,7 @@ const App = () => {
           <Route path="student-dashboard" element={<Sdash />} /> 
           <Route path="doctor-dashboard" element={<Ddash />} />
           <Route path="mentor-dashboard" element={<Mdash />} />
+          <Route path="committee-dashboard" element={<Cdash />} />
           
         </Route>
       </Routes>

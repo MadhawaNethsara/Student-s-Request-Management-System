@@ -30,11 +30,12 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/student', studentRoutes);
-app.use('/api/committee', committeeRoutes);
 app.use('/api/db-test', dbTestRoutes);
 app.use('/api/admin', student);
+app.use('/api', student);
 app.use('/api/admin',mentorRoutes )
 app.use('/api/admin', doctorRoutes);
+app.use('/api/admin', committeeRoutes);
 
 const PORT = process.env.PORT || 5000;
 

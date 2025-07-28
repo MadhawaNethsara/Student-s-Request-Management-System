@@ -29,10 +29,10 @@ const Login = () => {
         // localStorage.setItem("user", JSON.stringify(res.data.user));
 
         const role = res.data.user.role;
-        if (role === "student") navigate("/Sdash");
-        else if (role === "mentor") navigate("/Mdash");
-        else if (role === "doctor") navigate("/Ddash");
-        else if (role === "committee") navigate("/Cdash");
+        if (role === "student") navigate("/student-dashboard");
+        else if (role === "mentor") navigate("/mentor-dashboard");
+        else if (role === "doctor") navigate("/doctor-dashboard");
+        else if (role === "committee") navigate("/committee-dashboard");
         else if (role === "admin") navigate("/admin");
         else {
           setError("Unknown user role");
@@ -51,7 +51,7 @@ const Login = () => {
 
   return (
     <section className="bg-[url('./assets/logbg.jpg')] min-h-screen flex items-center justify-center font-mono bg-cover from-10% via-indigo-500 via-50% to-sky-500 to-100%">
-      <div className="shadow-2xl flex flex-col lg:flex-row bg-white/50 rounded-2xl overflow-hidden">
+      <div className="shadow-2xl flex flex-col mt-20 lg:flex-row bg-white/50 rounded-2xl overflow-hidden">
         <form
           onSubmit={handleLogin}
           className="flex flex-col justify-center p-10 gap-6 w-full max-w-md"

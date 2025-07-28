@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const users = require("../models/users");
 
 exports.mentorRegistration = async (req, res) => {
   try {

@@ -30,3 +30,13 @@ exports.studentRegistration = async (req, res) => {
     res.status(500).json({message:"Internal Server Error"});
   }
 };
+
+exports.getAllStudents = async (req, res) => {
+  try {
+    const students = await users.find({ role: 'student' });
+    res.status(200).json(students);
+  } catch (error) {
+    console.log("Error in fetching students[GET]:", error);
+    res.status(500).json({message: "Internal Server Error"});
+  }
+}

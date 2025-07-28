@@ -1,25 +1,30 @@
-const pool = require('../config/db');
+const bcrypt = require("bcrypt");
+const users = require("../models/users");
 
-exports.getAllApplications = async (req, res) => {
-  try {
-    const [applications] = await pool.query('SELECT * FROM medical_applications');
-    res.json(applications);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+exports.committeeRegistration = async (req, res)=> {
+  try{
+    const {name, email, password, contact_number} = req.body;
+
+    if(!name || !email || !password || !contact_number){
+      return res.status(400).json({message: "All fields are required"});
+    };
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newCommittee = new users({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'committee',
+      contact_number
+    });
+
+    await newCommittee.save();
+
+    res.status(201).json({message: "Committee member registered successfully", Committee: newCommittee});
+    
+  } catch (error) {
+    console.log("Error in Committee registration[POST]:", error);
+    res.status(500).json({message: "Internal Server Error"});
   }
-};
-
-exports.finalDecision = async (req, res) => {
-  const application_id = req.params.id;
-  const { decision } = req.body;
-
-  try {
-    await pool.query(
-      'UPDATE medical_applications SET status = ?, committee_decision_time = NOW() WHERE id = ?',
-      [decision, application_id]
-    );
-    res.json({ message: 'Final decision saved' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+}

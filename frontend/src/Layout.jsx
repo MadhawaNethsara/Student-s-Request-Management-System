@@ -4,7 +4,7 @@ function Layout() {
   return (
     <div>
       <Navbar />
-      <div className="pt-20 px-4"> {/* padding to offset fixed navbar */}
+      <div> {/* padding to offset fixed navbar */}
         <Outlet /> {/* Render nested routes here */}
       </div>
     </div>
