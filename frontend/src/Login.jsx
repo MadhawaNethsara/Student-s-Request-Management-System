@@ -96,12 +96,12 @@ const Login = () => {
             Login
           </button>
 
-          <p className="text-center font-semibold">
+          {/* <p className="text-center font-semibold">
             Don’t have an account?{" "}
             <a href="#" className="text-blue-500 hover:underline">
               Register
             </a>
-          </p>
+          </p> */}
         </form>
 
         <img

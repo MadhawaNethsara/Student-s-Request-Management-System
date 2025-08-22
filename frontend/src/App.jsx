@@ -12,6 +12,9 @@ import Sdash from './Student/Sdash.jsx'
 import Ddash from './Doctor/Ddash.jsx';
 import Cdash from './Committee/Cdash.jsx';
 import Mdash from './Mentor/Mdash.jsx';
+import MentorReg from './Admin/MentorReg.jsx';
+import DoctorReg from './Admin/DoctorReg.jsx';
+
 
 const App = () => {
   return (
@@ -26,6 +29,8 @@ const App = () => {
           
           <Route path="admin" element={<Admin />} /> 
           <Route path="admin/student-registration" element={<Stureg />} /> 
+          <Route path="admin/mentor-registration" element={<MentorReg />} />
+          <Route path="admin/doctor-registration" element={<DoctorReg />} />
           <Route path="admin" element={<Admin />} /> 
           <Route path="admin" element={<Admin />} /> 
           <Route path="student-dashboard" element={<Sdash />} /> 

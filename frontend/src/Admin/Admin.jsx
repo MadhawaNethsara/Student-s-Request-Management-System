@@ -14,11 +14,11 @@ function Admin() {
               🧑‍🎓 Register Students
             </button>
  
-            <button className="w-full py-3 bg-gradient-to-tr from-cyan-400 to-purple-500 hover:from-yellow-400 hover:to-red-500 text-white rounded-lg shadow-md transition-all duration-300 text-lg">
+            <button onClick={()=>navigate("/admin/mentor-registration")} className="w-full py-3 bg-gradient-to-tr from-cyan-400 to-purple-500 hover:from-yellow-400 hover:to-red-500 text-white rounded-lg shadow-md transition-all duration-300 text-lg">
               👨‍🏫 Register Mentors
             </button>
 
-            <button className="w-full py-3 bg-gradient-to-tr from-indigo-400 to-sky-500 hover:from-green-400 hover:to-indigo-500 text-white rounded-lg shadow-md transition-all duration-300 text-lg">
+            <button onClick={()=>navigate("/admin/doctor-registration")} className="w-full py-3 bg-gradient-to-tr from-indigo-400 to-sky-500 hover:from-green-400 hover:to-indigo-500 text-white rounded-lg shadow-md transition-all duration-300 text-lg">
               🧑‍⚕️ Register Doctors
             </button>
 

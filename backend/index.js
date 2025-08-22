@@ -33,8 +33,10 @@ app.use('/api/student', studentRoutes);
 app.use('/api/db-test', dbTestRoutes);
 app.use('/api/admin', student);
 app.use('/api', student);
-app.use('/api/admin',mentorRoutes )
+app.use('/api/admin',mentorRoutes );
+//app.use('/api/mentor',mentorRoutes );
 app.use('/api/admin', doctorRoutes);
+//app.use('/api/doctor', doctorRoutes);
 app.use('/api/admin', committeeRoutes);
 
 const PORT = process.env.PORT || 5000;

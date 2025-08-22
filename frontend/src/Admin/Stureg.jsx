@@ -6,7 +6,7 @@ return (
     <div className="flex flex-col items-center justify-center h-screen">
       <div className="w-full max-w-md bg-[#222]/75 rounded-xl shadow-md py-8 px-8">
         <h1 className="text-[28px] font-bold text-white mb-6 text-center">
-          Register Form
+          Register Student
         </h1>
         <form className="flex flex-col">
           <div className="flex space-x-4 mb-4">
