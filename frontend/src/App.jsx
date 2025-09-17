@@ -31,6 +31,7 @@ const App = () => {
           <Route path="admin/student-registration" element={<Stureg />} /> 
           <Route path="admin/mentor-registration" element={<MentorReg />} />
           <Route path="admin/doctor-registration" element={<DoctorReg />} />
+          <Route path="admin/edit-timetable" element={<Updatet />} />
           <Route path="admin" element={<Admin />} /> 
           <Route path="admin" element={<Admin />} /> 
           <Route path="student-dashboard" element={<Sdash />} /> 

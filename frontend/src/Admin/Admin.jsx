@@ -22,7 +22,7 @@ function Admin() {
               🧑‍⚕️ Register Doctors
             </button>
 
-            <button className="w-full py-3 bg-gradient-to-tr from-pink-400 to-rose-500 hover:from-blue-400 hover:to-green-500 text-white rounded-lg shadow-md transition-all duration-300 text-lg">
+            <button onClick={()=>navigate("/admin/edit-timetable")} className="w-full py-3 bg-gradient-to-tr from-pink-400 to-rose-500 hover:from-blue-400 hover:to-green-500 text-white rounded-lg shadow-md transition-all duration-300 text-lg">
               🗓️ Edit Time Tables
             </button>
           </div>
