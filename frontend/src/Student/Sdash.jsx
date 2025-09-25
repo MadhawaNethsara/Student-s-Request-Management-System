@@ -1,79 +1,136 @@
 import { useState, useEffect } from "react";
 
 const Sdash = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const storedUser = JSON.parse(localStorage.getItem("user"));
+  const token = storedUser?.token;
 
-  const [subjects, setSubjects] = useState([{ name: "", code: "", date: "" }]);
-  const [leaveReason, setLeaveReason] = useState("");
-  const [leaveDetails, setLeaveDetails] = useState("");
-  const [requests, setRequests] = useState([]); // Store fetched requests
+  // ---------------- Medical Form States ----------------
+  const [medicalForm, setMedicalForm] = useState({
+    fullName: "",
+    regNumber: "",
+    year: "",
+    level: "",
+    semester: "",
+    degree: "",
+    contact: "",
+    subjects: [{ name: "", code: "", date: "" }],
+    medicalSlip: null,
+  });
+
+  // ---------------- Leave Form States (display only) ----------------
+  const [leaveForm, setLeaveForm] = useState({
+    fullName: "",
+    regNumber: "",
+    year: "",
+    level: "",
+    semester: "",
+    degree: "",
+    contact: "",
+    reason: "",
+    details: "",
+    proofDoc: null,
+  });
+
+  // ---------------- Fetch Logged-in Student Data ----------------
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchStudentData = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/student/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          // Prefill medical form
+          setMedicalForm((prev) => ({
+            ...prev,
+            fullName: data.name || "",
+            regNumber: data.registration_number || "",
+            year: data.level || "", // your backend may only have "level"
+            level: data.level || "",
+            semester: data.semester || "",
+            degree: data.degree || "",
+            contact: data.contact_number || "",
+          }));
+
+          // Prefill leave form (display only)
+          setLeaveForm((prev) => ({
+            ...prev,
+            fullName: data.name || "",
+            regNumber: data.registration_number || "",
+            year: data.level || "",
+            level: data.level || "",
+            semester: data.semester || "",
+            degree: data.degree || "",
+            contact: data.contact_number || "",
+          }));
+        } else {
+          console.error("Failed to fetch student data:", data.message);
+        }
+      } catch (err) {
+        console.error("Error fetching student data:", err);
+      }
+    };
+
+    fetchStudentData();
+  }, [token]);
+
+  // ---------------- Handlers ----------------
+  const handleMedicalChange = (e) => {
+    const { name, value } = e.target;
+    setMedicalForm({ ...medicalForm, [name]: value });
+  };
+
+  const handleMedicalFile = (e) => {
+    setMedicalForm({ ...medicalForm, medicalSlip: e.target.files[0] });
+  };
 
   const handleSubjectChange = (index, field, value) => {
-    const updated = [...subjects];
+    const updated = [...medicalForm.subjects];
     updated[index][field] = value;
-    setSubjects(updated);
+    setMedicalForm({ ...medicalForm, subjects: updated });
   };
 
   const addSubjectRow = () => {
-    setSubjects([...subjects, { name: "", code: "", date: "" }]);
+    setMedicalForm({
+      ...medicalForm,
+      subjects: [...medicalForm.subjects, { name: "", code: "", date: "" }],
+    });
   };
 
-  // Medical Form Submit
-  const handleSubmit = async (e) => {
+  // ---------------- Medical Form Submission ----------------
+  const handleMedicalSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("fullName", e.target.fullName.value);
-    formData.append("regNumber", e.target.regNumber.value);
-    formData.append("year", e.target.year.value);
-    formData.append("level", e.target.level.value);
-    formData.append("semester", e.target.semester.value);
-    formData.append("degree", e.target.degree.value);
-    formData.append("contact", e.target.contact.value);
-    formData.append("subjects", JSON.stringify(subjects));
-    formData.append("file", e.target.medicalSlip.files[0]);
 
-    try {
-      const token = user?.token;
-      const res = await fetch("http://localhost:5000/api/student/submit", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        alert("Medical form submitted successfully!");
-        setSubjects([{ name: "", code: "", date: "" }]);
-        e.target.reset();
-        fetchRequests(); // refresh request list
-      } else {
-        alert("Submission failed: " + data.message);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred while submitting the form.");
+    if (!token) {
+      alert("Token not found. Please login again.");
+      return;
     }
-  };
 
-  // Exam Leave (Other Reason) Submit
-  const handleLeaveSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("fullName", e.target.fullName.value);
-    formData.append("regNumber", e.target.regNumber.value);
-    formData.append("year", e.target.year.value);
-    formData.append("level", e.target.level.value);
-    formData.append("semester", e.target.semester.value);
-    formData.append("degree", e.target.degree.value);
-    formData.append("contact", e.target.contact.value);
-    formData.append("reason", leaveReason);
-    formData.append("details", leaveDetails);
-    formData.append("file", e.target.proofDoc.files[0]);
+    if (!medicalForm.medicalSlip) {
+      alert("Please upload a medical slip.");
+      return;
+    }
 
     try {
-      const token = user?.token;
+      const formData = new FormData();
+      formData.append("subjects", JSON.stringify(medicalForm.subjects));
+      formData.append("medicalSlip", medicalForm.medicalSlip);
+
+      // Optional: you can include other fields if backend expects them
+      formData.append("fullName", medicalForm.fullName);
+      formData.append("regNumber", medicalForm.regNumber);
+      formData.append("year", medicalForm.year);
+      formData.append("level", medicalForm.level);
+      formData.append("semester", medicalForm.semester);
+      formData.append("degree", medicalForm.degree);
+      formData.append("contact", medicalForm.contact);
+
       const res = await fetch(
-        "http://localhost:5000/api/student/leave-request",
+        "http://localhost:5000/api/student/medicalform",
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -82,84 +139,89 @@ const Sdash = () => {
       );
 
       const data = await res.json();
+
       if (res.ok) {
-        alert("Exam leave request submitted successfully!");
-        setLeaveReason("");
-        setLeaveDetails("");
-        e.target.reset();
-        fetchRequests(); // refresh request list
+        alert("Medical form submitted successfully ✅");
+        setMedicalForm((prev) => ({
+          ...prev,
+          subjects: [{ name: "", code: "", date: "" }],
+          medicalSlip: null,
+        }));
       } else {
-        alert("Leave request failed: " + data.message);
+        alert("Submission failed: " + data.message);
       }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred while submitting the leave request.");
+    } catch (err) {
+      console.error("Error submitting medical form:", err);
+      alert("Submission failed: Check console for details");
     }
   };
-
-  // Fetch all student requests (Medical + Leave)
-  const fetchRequests = async () => {
-    try {
-      const token = user?.token;
-      const res = await fetch("http://localhost:5000/api/student/my-requests", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setRequests(data);
-      }
-    } catch (error) {
-      console.error("Error fetching requests:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchRequests();
-  }, []);
 
   return (
     <section className="min-h-screen flex flex-col items-center font-mono bg-[url('./assets/ruhuna.jpeg')] bg-cover p-6 space-y-10">
-      {/* ---------------- Forms Grid ---------------- */}
       <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Medical Form */}
         <div className="bg-[#1e1e1e]/80 rounded-xl shadow-xl p-8 text-white">
           <h1 className="text-3xl font-bold mb-6 text-center">
             Submit Medical Form
           </h1>
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleMedicalSubmit}>
             <div className="grid grid-cols-2 gap-4">
               <input
                 type="text"
                 name="fullName"
+                value={medicalForm.fullName}
+                onChange={handleMedicalChange}
                 placeholder="Full Name"
                 className="input-style"
               />
               <input
                 type="text"
                 name="regNumber"
+                value={medicalForm.regNumber}
+                onChange={handleMedicalChange}
                 placeholder="Registration Number"
                 className="input-style"
               />
-              <select name="year" className="input-style">
+              <select
+                name="year"
+                value={medicalForm.year}
+                onChange={handleMedicalChange}
+                className="input-style"
+              >
                 <option value="">Select Year</option>
                 <option>2020</option>
                 <option>2021</option>
                 <option>2022</option>
                 <option>2023</option>
               </select>
-              <select name="level" className="input-style">
+              <select
+                name="level"
+                value={medicalForm.level}
+                onChange={handleMedicalChange}
+                className="input-style"
+              >
                 <option value="">Select Level</option>
                 <option>1</option>
                 <option>2</option>
                 <option>3</option>
                 <option>Special</option>
               </select>
-              <select name="semester" className="input-style">
+              <select
+                name="semester"
+                value={medicalForm.semester}
+                onChange={handleMedicalChange}
+                className="input-style"
+              >
                 <option value="">Select Semester</option>
                 <option>1st Semester</option>
                 <option>2nd Semester</option>
               </select>
-              <select name="degree" className="input-style">
+              <select
+                name="degree"
+                value={medicalForm.degree}
+                onChange={handleMedicalChange}
+                className="input-style"
+              >
                 <option value="">Degree Programme</option>
                 <option>Bio Science</option>
                 <option>Physical Science</option>
@@ -168,6 +230,8 @@ const Sdash = () => {
               <input
                 type="text"
                 name="contact"
+                value={medicalForm.contact}
+                onChange={handleMedicalChange}
                 placeholder="Contact Number"
                 className="input-style col-span-2"
               />
@@ -179,7 +243,7 @@ const Sdash = () => {
                 Subjects Covered by Medical
               </h2>
               <div className="space-y-2">
-                {subjects.map((subj, index) => (
+                {medicalForm.subjects.map((subj, index) => (
                   <div key={index} className="grid grid-cols-3 gap-4">
                     <input
                       type="text"
@@ -220,12 +284,11 @@ const Sdash = () => {
             </div>
 
             <div>
-              <label className="block font-semibold mb-1">
-                Upload Medical Slip
-              </label>
+              <label className="block font-semibold mb-1">Upload Medical Slip</label>
               <input
                 type="file"
                 name="medicalSlip"
+                onChange={handleMedicalFile}
                 className="input-style bg-white text-black"
               />
             </div>
@@ -239,148 +302,71 @@ const Sdash = () => {
           </form>
         </div>
 
-        {/* Exam Leave Form */}
+        {/* Exam Leave Form (display only) */}
         <div className="bg-[#2a2a2a]/80 rounded-xl shadow-xl p-8 text-white">
-          <h1 className="text-3xl font-bold mb-6 text-center">
-            Request Exam Leave
-          </h1>
-          <form className="space-y-4" onSubmit={handleLeaveSubmit}>
+          <h1 className="text-3xl font-bold mb-6 text-center">Request Exam Leave</h1>
+          <form className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <input
                 type="text"
-                name="fullName"
-                placeholder="Full Name"
-                className="input-style"
+                value={leaveForm.fullName}
+                readOnly
+                className="input-style bg-gray-500/50"
               />
               <input
                 type="text"
-                name="regNumber"
-                placeholder="Registration Number"
-                className="input-style"
+                value={leaveForm.regNumber}
+                readOnly
+                className="input-style bg-gray-500/50"
               />
-              <select name="year" className="input-style">
-                <option value="">Select Year</option>
-                <option>2020</option>
-                <option>2021</option>
-                <option>2022</option>
-                <option>2023</option>
+              <select value={leaveForm.year} disabled className="input-style bg-gray-500/50">
+                <option>{leaveForm.year}</option>
               </select>
-              <select name="level" className="input-style">
-                <option value="">Select Level</option>
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-                <option>Special</option>
+              <select value={leaveForm.level} disabled className="input-style bg-gray-500/50">
+                <option>{leaveForm.level}</option>
               </select>
-              <select name="semester" className="input-style">
-                <option value="">Select Semester</option>
-                <option>1st Semester</option>
-                <option>2nd Semester</option>
+              <select value={leaveForm.semester} disabled className="input-style bg-gray-500/50">
+                <option>{leaveForm.semester}</option>
               </select>
-              <select name="degree" className="input-style">
-                <option value="">Degree Programme</option>
-                <option>Bio Science</option>
-                <option>Physical Science</option>
-                <option>Computer Science</option>
+              <select value={leaveForm.degree} disabled className="input-style bg-gray-500/50">
+                <option>{leaveForm.degree}</option>
               </select>
               <input
                 type="text"
-                name="contact"
-                placeholder="Contact Number"
-                className="input-style col-span-2"
+                value={leaveForm.contact}
+                readOnly
+                className="input-style col-span-2 bg-gray-500/50"
               />
             </div>
 
             <textarea
-              name="reason"
+              value={leaveForm.reason}
+              readOnly
               placeholder="Reason for Leave"
-              className="input-style w-full"
-              value={leaveReason}
-              onChange={(e) => setLeaveReason(e.target.value)}
+              className="input-style w-full bg-gray-500/50"
             />
             <textarea
-              name="details"
-              placeholder="Provide additional details..."
-              className="input-style w-full"
+              value={leaveForm.details}
+              readOnly
+              placeholder="Additional details..."
+              className="input-style w-full bg-gray-500/50"
               rows="3"
-              value={leaveDetails}
-              onChange={(e) => setLeaveDetails(e.target.value)}
             />
 
             <div>
-              <label className="block font-semibold mb-1">
-                Upload Proof Document
-              </label>
-              <input
-                type="file"
-                name="proofDoc"
-                className="input-style bg-white text-black"
-              />
+              <label className="block font-semibold mb-1">Upload Proof Document</label>
+              <input type="file" disabled className="input-style bg-gray-500/50" />
             </div>
 
             <button
-              type="submit"
-              className="px-6 py-2 mt-4 rounded-md bg-gradient-to-tr from-yellow-400 to-red-500 hover:to-pink-600 text-white text-lg"
+              type="button"
+              disabled
+              className="px-6 py-2 mt-4 rounded-md bg-gray-400 text-white text-lg cursor-not-allowed"
             >
               Submit Leave Request
             </button>
           </form>
         </div>
-      </div>
-
-      {/* ---------------- Requests Status Section ---------------- */}
-      <div className="w-full max-w-7xl bg-[#1e1e1e]/80 rounded-xl shadow-xl p-8 text-white">
-        <h1 className="text-3xl font-bold mb-6 text-center">
-          My Requests Status
-        </h1>
-        <table className="w-full text-left border border-white/20">
-          <thead className="bg-white/20">
-            <tr>
-              <th className="py-3 px-4">Type</th>
-              <th className="py-3 px-4">Submitted On</th>
-              <th className="py-3 px-4">Details</th>
-              <th className="py-3 px-4">Current Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.length > 0 ? (
-              requests.map((req, i) => (
-                <tr
-                  key={i}
-                  className="border-t border-white/20 hover:bg-white/10 transition"
-                >
-                  <td className="py-3 px-4">{req.type}</td>
-                  <td className="py-3 px-4">
-                    {new Date(req.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="py-3 px-4">
-                    {req.reason || "Medical request"}
-                  </td>
-                  <td className="py-3 px-4">
-                    {req.status === "mentor_pending" &&
-                      "Being checked by Mentor"}
-                    {req.status === "doctor_pending" &&
-                      "Being checked by Doctor"}
-                    {req.status === "committee_pending" &&
-                      "Waiting for Committee decision"}
-                    {req.status === "approved" && (
-                      <span className="text-green-400">Approved</span>
-                    )}
-                    {req.status === "rejected" && (
-                      <span className="text-red-400">Rejected</span>
-                    )}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4" className="text-center py-4 text-gray-400">
-                  No requests found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
       </div>
     </section>
   );

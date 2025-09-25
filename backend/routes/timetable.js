@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router();
+const Timetable = require("../models/timetable.js");
 const {
   addTimetableEntry,
   bulkUploadTimetable,
@@ -7,16 +7,12 @@ const {
   deleteAllTimetables,
 } = require("../controllers/timetableController");
 
-// Add single timetable entry
-router.post("/add-entry", addTimetableEntry);
+const router = express.Router();
 
-// Bulk upload timetable (Excel/JSON array)
-router.post("/bulk-upload", bulkUploadTimetable);
-
-// Get all timetable entries
-router.get("/all", getAllTimetables);
-
-// Delete all timetable entries
-router.delete("/delete-all", deleteAllTimetables);
+// Routes
+router.post("/add", addTimetableEntry);
+router.post("/bulk", bulkUploadTimetable);
+router.get("/", getAllTimetables);
+router.delete("/", deleteAllTimetables);
 
 module.exports = router;

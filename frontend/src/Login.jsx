@@ -23,10 +23,11 @@ const Login = () => {
         email,
         password,
       });
-      console.log(res);
-      if (res.data && res.data.user) {
-        // localStorage.setItem("token", res.data.token);
-        // localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      if (res.data && res.data.user && res.data.token) {
+        // Store user + token in localStorage
+        const userWithToken = { ...res.data.user, token: res.data.token };
+        localStorage.setItem("user", JSON.stringify(userWithToken));
 
         const role = res.data.user.role;
         if (role === "student") navigate("/student-dashboard");
@@ -34,9 +35,7 @@ const Login = () => {
         else if (role === "doctor") navigate("/doctor-dashboard");
         else if (role === "committee") navigate("/committee-dashboard");
         else if (role === "admin") navigate("/admin");
-        else {
-          setError("Unknown user role");
-        }
+        else setError("Unknown user role");
       } else {
         setError("Invalid login response. Please try again.");
       }
@@ -95,13 +94,6 @@ const Login = () => {
           >
             Login
           </button>
-
-          {/* <p className="text-center font-semibold">
-            Don’t have an account?{" "}
-            <a href="#" className="text-blue-500 hover:underline">
-              Register
-            </a>
-          </p> */}
         </form>
 
         <img

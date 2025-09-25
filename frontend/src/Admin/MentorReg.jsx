@@ -79,7 +79,7 @@ function MentorReg() {
             <input
               name="contact_number"
               placeholder="Contact Number"
-              value={formData.contactNumber}
+              value={formData.contact_number}
               onChange={handleChange}
               className="bg-white/25 text-white border-0 rounded-md p-2 mb-6 focus:bg-gray-600 focus:outline-none transition duration-150 placeholder-gray-300"
               type="text"

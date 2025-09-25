@@ -1,40 +1,52 @@
-// routes/timetableRoutes.js
-import express from "express";
-import Timetable from "../models/timetable.js";
+const Timetable = require("../models/timetable.js");
 
-const router = express.Router();
-
-// Add single entry
-router.post("/add", async (req, res) => {
+// Add single timetable entry
+const addTimetableEntry = async (req, res) => {
   try {
     const timetable = new Timetable(req.body);
     await timetable.save();
-    res.json({ message: "Timetable entry added", timetable });
+    res.status(201).json({
+      message: "Timetable entry added successfully",
+      timetable,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
+};
 
-// Bulk upload (Excel) — later you’ll parse Excel and insertMany
-router.post("/bulk", async (req, res) => {
+// Bulk upload timetable entries
+const bulkUploadTimetable = async (req, res) => {
   try {
-    await Timetable.insertMany(req.body); // req.body = array of entries
-    res.json({ message: "Bulk entries added" });
+    await Timetable.insertMany(req.body); // expects an array of entries
+    res.status(201).json({ message: "Bulk timetable entries added successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
+};
 
-// Get all entries
-router.get("/", async (req, res) => {
-  const tables = await Timetable.find();
-  res.json(tables);
-});
+// Get all timetable entries
+const getAllTimetables = async (req, res) => {
+  try {
+    const timetables = await Timetable.find();
+    res.json(timetables);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-// Delete all entries
-router.delete("/", async (req, res) => {
-  await Timetable.deleteMany();
-  res.json({ message: "All timetable entries deleted" });
-});
+// Delete all timetable entries
+const deleteAllTimetables = async (req, res) => {
+  try {
+    await Timetable.deleteMany();
+    res.json({ message: "All timetable entries deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-export default router;
+module.exports = {
+  addTimetableEntry,
+  bulkUploadTimetable,
+  getAllTimetables,
+  deleteAllTimetables,
+};

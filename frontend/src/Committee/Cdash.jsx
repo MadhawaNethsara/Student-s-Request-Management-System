@@ -1,73 +1,82 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 function Cdash() {
-  // Dummy data (replace with DB/API later)
-  const medicalApplications = [
-    {
-      id: 1,
-      name: "Nimal Perera",
-      index: "SE/2021/005",
-      year: "3rd",
-      degree: "Computer Science",
-      email: "nimalp@ruh.ac.lk",
-      category: "Medical",
-      status: "Pending",
-      formLink: "#",
-    },
-    {
-      id: 2,
-      name: "Kamal Silva",
-      index: "SE/2021/010",
-      year: "2nd",
-      degree: "IT",
-      email: "kamals@ruh.ac.lk",
-      category: "Medical",
-      status: "Approved",
-      formLink: "#",
-    },
-  ];
-
-  const leaveApplications = [
-    {
-      id: 1,
-      name: "Sunil Wickrama",
-      index: "SE/2021/015",
-      year: "2nd",
-      degree: "Mathematics",
-      email: "sunilw@ruh.ac.lk",
-      reason: "Family Emergency",
-      status: "Pending",
-      formLink: "#",
-    },
-    {
-      id: 2,
-      name: "Anoma Fernando",
-      index: "SE/2020/021",
-      year: "3rd",
-      degree: "Computer Science",
-      email: "anomaf@ruh.ac.lk",
-      reason: "Travel Abroad",
-      status: "Pending",
-      formLink: "#",
-    },
-  ];
-
+  const [forms, setForms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
 
-  // Filtering by degree/year/status
-  const filteredMedical = medicalApplications.filter(
-    (app) =>
-      app.degree.toLowerCase().includes(search.toLowerCase()) ||
-      app.year.toLowerCase().includes(search.toLowerCase()) ||
-      app.status.toLowerCase().includes(search.toLowerCase())
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const token = storedUser.token;
+
+  useEffect(() => {
+    const fetchForms = async () => {
+      if (!token) {
+        setError("No token found. Please login again.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await axios.get("http://localhost:5000/api/committee/forms", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.success) setForms(res.data.forms || []);
+      } catch (err) {
+        console.error("Error fetching forms:", err);
+        setError("Failed to load forms");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchForms();
+  }, [token]);
+
+  const handleReview = async (id, action) => {
+    let reason = "";
+    if (action === "reject") {
+      reason = prompt("Enter reason for rejection:");
+      if (!reason) return;
+    }
+
+    try {
+      await axios.put(
+        `http://localhost:5000/api/committee/forms/${id}/review`,
+        { action, reason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setForms(forms.filter((f) => f._id !== id));
+    } catch (err) {
+      console.error("Error reviewing form:", err);
+      alert("Action failed. Please try again.");
+    }
+  };
+
+  // Filtering by student name, regNumber, or status
+  const filteredForms = forms.filter(
+    (f) =>
+      f.student?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      f.student?.regNumber?.toLowerCase().includes(search.toLowerCase()) ||
+      (f.status || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  // Stats data (replace with DB calculations later)
+  // Statistics for PieChart
+  const stats = filteredForms.reduce(
+    (acc, f) => {
+      if (f.status === "committee_approved") acc.approved += 1;
+      else if (f.status === "committee_rejected") acc.rejected += 1;
+      else acc.pending += 1;
+      return acc;
+    },
+    { approved: 0, rejected: 0, pending: 0 }
+  );
+
   const statsData = [
-    { name: "Approved", value: 12 },
-    { name: "Rejected", value: 5 },
-    { name: "Pending", value: 8 },
+    { name: "Approved", value: stats.approved },
+    { name: "Rejected", value: stats.rejected },
+    { name: "Pending", value: stats.pending },
   ];
 
   const COLORS = ["#4CAF50", "#F44336", "#FF9800"];
@@ -79,125 +88,80 @@ function Cdash() {
           Committee Panel
         </h1>
 
-        {/* --- Search --- */}
-        <div className="mb-4 flex justify-end">
-          <input
-            type="text"
-            placeholder="Search by Degree / Year / Status..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-4 py-2 rounded-md text-black w-72"
-          />
-        </div>
+        {loading ? (
+          <p className="text-white text-center">Loading forms...</p>
+        ) : error ? (
+          <p className="text-red-400 text-center">{error}</p>
+        ) : (
+          <>
+            <div className="mb-4 flex justify-end">
+              <input
+                type="text"
+                placeholder="Search by Name / Index / Status..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="px-4 py-2 rounded-md text-black w-72"
+              />
+            </div>
 
-        {/* --- Medical Applications --- */}
-        <h2 className="text-xl font-semibold text-white mb-3">
-          Medical Applications
-        </h2>
-        <table className="min-w-full text-white text-left border border-white/20 mb-8">
-          <thead className="bg-white/20 text-white">
-            <tr>
-              <th className="py-3 px-4">Student Name</th>
-              <th className="py-3 px-4">Index No</th>
-              <th className="py-3 px-4">Year</th>
-              <th className="py-3 px-4">Degree</th>
-              <th className="py-3 px-4">Email</th>
-              <th className="py-3 px-4">Form</th>
-              <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredMedical.map((app) => (
-              <tr
-                key={app.id}
-                className="border-t border-white/20 hover:bg-white/10 transition"
-              >
-                <td className="py-3 px-4">{app.name}</td>
-                <td className="py-3 px-4">{app.index}</td>
-                <td className="py-3 px-4">{app.year}</td>
-                <td className="py-3 px-4">{app.degree}</td>
-                <td className="py-3 px-4">{app.email}</td>
-                <td className="py-3 px-4">
-                  <a
-                    href={app.formLink}
-                    className="text-blue-300 underline hover:text-blue-500"
-                    target="_blank"
-                    rel="noopener noreferrer"
+            <table className="min-w-full text-white text-left border border-white/20">
+              <thead className="bg-white/20 text-white">
+                <tr>
+                  <th className="py-3 px-4">Student Name</th>
+                  <th className="py-3 px-4">Index No</th>
+                  <th className="py-3 px-4">Email</th>
+                  <th className="py-3 px-4">Form</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredForms.map((f) => (
+                  <tr
+                    key={f._id}
+                    className="border-t border-white/20 hover:bg-white/10 transition"
                   >
-                    View Form
-                  </a>
-                </td>
-                <td className="py-3 px-4">{app.status}</td>
-                <td className="py-3 px-4 space-x-2">
-                  <button className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm">
-                    Approve
-                  </button>
-                  <button className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm">
-                    Reject
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* --- Other Reason Leave Applications --- */}
-        <h2 className="text-xl font-semibold text-white mb-3">
-          Exam Leave Requests (Other Reasons)
-        </h2>
-        <table className="min-w-full text-white text-left border border-white/20">
-          <thead className="bg-white/20 text-white">
-            <tr>
-              <th className="py-3 px-4">Student Name</th>
-              <th className="py-3 px-4">Index No</th>
-              <th className="py-3 px-4">Year</th>
-              <th className="py-3 px-4">Degree</th>
-              <th className="py-3 px-4">Email</th>
-              <th className="py-3 px-4">Reason</th>
-              <th className="py-3 px-4">Form</th>
-              <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leaveApplications.map((app) => (
-              <tr
-                key={app.id}
-                className="border-t border-white/20 hover:bg-white/10 transition"
-              >
-                <td className="py-3 px-4">{app.name}</td>
-                <td className="py-3 px-4">{app.index}</td>
-                <td className="py-3 px-4">{app.year}</td>
-                <td className="py-3 px-4">{app.degree}</td>
-                <td className="py-3 px-4">{app.email}</td>
-                <td className="py-3 px-4">{app.reason}</td>
-                <td className="py-3 px-4">
-                  <a
-                    href={app.formLink}
-                    className="text-blue-300 underline hover:text-blue-500"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View Form
-                  </a>
-                </td>
-                <td className="py-3 px-4">{app.status}</td>
-                <td className="py-3 px-4 space-x-2">
-                  <button className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm">
-                    Approve
-                  </button>
-                  <button className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm">
-                    Reject
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    <td className="py-3 px-4">{f.student?.name || "-"}</td>
+                    <td className="py-3 px-4">{f.student?.regNumber || "-"}</td>
+                    <td className="py-3 px-4">{f.student?.email || "-"}</td>
+                    <td className="py-3 px-4">
+                      <a
+                        href={`http://localhost:5000/${f.medicalSlip || ""}`}
+                        className="text-blue-300 underline hover:text-blue-500"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View Form
+                      </a>
+                    </td>
+                    <td className="py-3 px-4">{f.status || "Pending"}</td>
+                    <td className="py-3 px-4 space-x-2">
+                      {(f.status || "") === "doctor_validated" && (
+                        <>
+                          <button
+                            onClick={() => handleReview(f._id, "approve")}
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleReview(f._id, "reject")}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
       </div>
 
-      {/* --- Statistics Section --- */}
+      {/* Statistics */}
       <div className="w-full max-w-4xl bg-[#1e1e1e]/80 rounded-xl shadow-xl p-8 text-white">
         <h2 className="text-2xl font-bold mb-6 text-center">
           Medical Requests Statistics
@@ -214,10 +178,7 @@ function Cdash() {
             label
           >
             {statsData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={COLORS[index % COLORS.length]}
-              />
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
           <Tooltip />
