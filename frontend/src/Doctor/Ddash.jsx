@@ -70,7 +70,7 @@ function Ddash() {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center font-mono bg-[url('./assets/ruhuna.jpeg')] bg-cover">
+    <section className="min-h-screen flex flex-col items-center font-mono p-6 space-y-10">
       <div className="w-full max-w-4xl bg-[#1e1e1e]/80 rounded-xl shadow-xl p-8 overflow-x-auto">
         <h1 className="text-3xl font-bold text-white mb-6 text-center">
           Doctor Panel

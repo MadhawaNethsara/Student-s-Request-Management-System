@@ -1,7 +1,8 @@
 function About() {
       //console.log("About component rendered");
   return (
-    <section className="min-h-screen flex items-center justify-center font-mono bg-[url('./assets/ruhuna.jpeg')] bg-cover px-4">
+    <section className="min-h-screen flex flex-col items-center font-mono p-6 space-y-10">
+
       <div className="bg-[#1e1e1e]/80 rounded-xl shadow-lg max-w-2xl w-full p-8 text-white">
         <h1 className="text-4xl font-bold mb-4 text-center">About This Application</h1>
         <p className="text-lg leading-relaxed mb-6">
@@ -17,7 +18,7 @@ function About() {
         </p>
         <p className="text-md text-center mt-10">
           Developed by: <strong>COM PROJECT(03)-2025</strong> <br />
-          Contact: <a href="mailto:yourname@domain.com" className="text-blue-400 underline">madhawa.nethsara24@gmail.com</a>
+          Contact: <a href="mailto:yourname@domain.com" className="text-blue-400 underline">studentreqcom@gmail.com</a>
         </p>
       </div>
     </section>

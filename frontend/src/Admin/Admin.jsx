@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 function Admin() {
   const navigate = useNavigate();
   return (
-    <section className="min-h-screen flex items-center justify-center font-mono bg-[url('./assets/ruhuna.jpeg')] bg-cover bg-center">
+    <section className="min-h-screen flex flex-col items-center font-mono p-6 space-y-10">
       <div className="flex flex-col items-center justify-center w-full px-4">
         
         <div className="w-full max-w-md bg-[#222]/75 rounded-xl shadow-lg p-8 text-center">

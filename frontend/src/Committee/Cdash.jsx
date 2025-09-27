@@ -82,7 +82,7 @@ function Cdash() {
   const COLORS = ["#4CAF50", "#F44336", "#FF9800"];
 
   return (
-    <section className="min-h-screen flex flex-col items-center font-mono bg-[url('./assets/ruhuna.jpeg')] bg-cover p-6 space-y-10">
+   <section className="min-h-screen flex flex-col items-center font-mono p-6 space-y-10">
       <div className="w-full max-w-6xl bg-[#1e1e1e]/80 backdrop-blur-md rounded-xl shadow-xl p-8 overflow-x-auto">
         <h1 className="text-3xl font-bold text-white mb-6 text-center">
           Committee Panel

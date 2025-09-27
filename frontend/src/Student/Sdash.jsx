@@ -49,7 +49,7 @@ const Sdash = () => {
             ...prev,
             fullName: data.name || "",
             regNumber: data.registration_number || "",
-            year: data.level || "", // your backend may only have "level"
+            year: data.year || "", // your backend may only have "level"
             level: data.level || "",
             semester: data.semester || "",
             degree: data.degree || "",
@@ -61,7 +61,7 @@ const Sdash = () => {
             ...prev,
             fullName: data.name || "",
             regNumber: data.registration_number || "",
-            year: data.level || "",
+            year: data.year || "",
             level: data.level || "",
             semester: data.semester || "",
             degree: data.degree || "",
@@ -157,7 +157,7 @@ const Sdash = () => {
   };
 
   return (
-    <section className="min-h-screen flex flex-col items-center font-mono bg-[url('./assets/ruhuna.jpeg')] bg-cover p-6 space-y-10">
+    <section className="min-h-screen flex flex-col items-center font-mono p-6 space-y-10">
       <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Medical Form */}
         <div className="bg-[#1e1e1e]/80 rounded-xl shadow-xl p-8 text-white">
@@ -189,10 +189,9 @@ const Sdash = () => {
                 className="input-style"
               >
                 <option value="">Select Year</option>
-                <option>2020</option>
-                <option>2021</option>
-                <option>2022</option>
-                <option>2023</option>
+                <option>2025</option>
+                <option>2026</option>
+                <option>2027</option>
               </select>
               <select
                 name="level"

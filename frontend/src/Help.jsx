@@ -1,6 +1,7 @@
 function Help() {
   return (
-    <section className="min-h-screen flex items-center justify-center font-mono bg-[url('./assets/ruhuna.jpeg')] bg-cover px-4">
+    <section className="min-h-screen flex flex-col items-center font-mono p-6 space-y-10">
+
       <div className="bg-[#1e1e1e]/80 rounded-xl shadow-lg max-w-4xl w-full p-8 text-white">
         <h1 className="text-4xl font-bold mb-4 text-center">Help & Instructions</h1>
         <p className="text-lg mb-6 text-center">

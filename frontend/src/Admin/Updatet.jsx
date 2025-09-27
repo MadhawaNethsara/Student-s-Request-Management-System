@@ -76,7 +76,7 @@ function Updatet() {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center font-mono bg-[url('./assets/ruhuna.jpeg')] bg-cover bg-center px-6 py-10">
+    <section className="min-h-screen flex flex-col items-center font-mono p-6 space-y-10">
       <div className="w-full max-w-6xl bg-[#1e1e1e]/80 backdrop-blur-md rounded-2xl shadow-xl p-10">
         <h1 className="text-4xl font-bold text-white text-center mb-10">
           Timetable Management
