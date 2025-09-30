@@ -32,8 +32,8 @@ function Mdash() {
           // Map to include student info directly
           const mappedForms = res.data.forms.map((form) => ({
             ...form,
-            fullName: form.student?.name || "N/A",
-            regNumber: form.student?.regNumber || "N/A",
+            fullName: form.student?.name || "",
+            registration_number: form.student?.registration_number || "",
             email: form.student?.email || "",
           }));
           setForms(mappedForms);

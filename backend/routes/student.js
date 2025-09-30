@@ -1,4 +1,7 @@
 const express = require("express");
+const multer = require("multer");
+const router = express.Router();
+
 const {
   studentRegistration,
   getAllStudents,
@@ -7,11 +10,14 @@ const {
   deleteStudent,
   submitMedicalForm,
   getLoggedInStudent,
+  submitLeave,
 } = require("../controllers/studentController");
-const upload = require("../middleware/upload");
+
 const verifyToken = require("../middleware/authMiddleware");
 
-const router = express.Router();
+// ------------------- Multer Setup -------------------
+// Single declaration of upload
+const upload = multer({ dest: "uploads/" });
 
 // ---------------- Student Registration & CRUD ----------------
 router.post("/register", studentRegistration);          // Register a new student
@@ -29,8 +35,16 @@ router.get("/:id", getStudentById);                   // Get student by ID
 router.post(
   "/medicalform",
   verifyToken,
-  upload.single("medicalSlip"),
+  upload.single("medicalSlip"),   // Use the single upload instance
   submitMedicalForm
+);
+
+// ---------------- Leave Form Submission ----------------
+router.post(
+  "/leave",
+  verifyToken,
+  upload.single("proofDoc"),      // Use the same upload instance
+  submitLeave
 );
 
 module.exports = router;

@@ -50,7 +50,7 @@ const Login = () => {
 
   return (
     
-    <section className="bg-[url('./assets/logbg.jpg')] bg-cover bg-center bg-no-repeat bg-fixed min-h-screen flex items-center justify-center font-mono">
+    <section className="bg-[url('./assets/logbg.jpg')] bg-cover  bg-center bg-no-repeat bg-fixed min-h-screen flex items-center justify-center font-mono">
       <div className="shadow-2xl flex flex-col mt-20 lg:flex-row bg-white/50 rounded-2xl overflow-hidden">
         <form
           onSubmit={handleLogin}

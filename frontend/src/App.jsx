@@ -19,7 +19,7 @@ import DoctorReg from './Admin/DoctorReg.jsx';
 const App = () => {
   return (
        <BrowserRouter>
-      <Navbar/>
+      {/* <Navbar/> */}
       <Routes>
           <Route path="/" element={<Layout />}>
           <Route index element={<Login />} />

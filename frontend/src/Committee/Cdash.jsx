@@ -1,29 +1,38 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 function Cdash() {
-  const [forms, setForms] = useState([]);
+  const [medicalForms, setMedicalForms] = useState([]);
+  const [leaveForms, setLeaveForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+
+  const [searchMedical, setSearchMedical] = useState("");
+  const [searchLeave, setSearchLeave] = useState("");
+  const [showRejectedMedical, setShowRejectedMedical] = useState(false);
 
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const token = storedUser.token;
 
+  // Fetch forms
   useEffect(() => {
-    const fetchForms = async () => {
-      if (!token) {
-        setError("No token found. Please login again.");
-        setLoading(false);
-        return;
-      }
+    if (!token) {
+      setError("Session expired. Please login again.");
+      setLoading(false);
+      return;
+    }
 
+    const fetchForms = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/committee/forms", {
+        const medRes = await axios.get("http://localhost:5000/api/committee/forms", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.data.success) setForms(res.data.forms || []);
+        if (medRes.data.success) setMedicalForms(medRes.data.forms || []);
+
+        const leaveRes = await axios.get("http://localhost:5000/api/committee/leaveforms", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (leaveRes.data.success) setLeaveForms(leaveRes.data.forms || []);
       } catch (err) {
         console.error("Error fetching forms:", err);
         setError("Failed to load forms");
@@ -31,10 +40,17 @@ function Cdash() {
         setLoading(false);
       }
     };
+
     fetchForms();
   }, [token]);
 
-  const handleReview = async (id, action) => {
+  // Approve/Reject Medical
+  const handleMedicalAction = async (id, action) => {
+    if (!token) {
+      alert("Session expired. Please login again.");
+      return;
+    }
+
     let reason = "";
     if (action === "reject") {
       reason = prompt("Enter reason for rejection:");
@@ -42,148 +58,238 @@ function Cdash() {
     }
 
     try {
-      await axios.put(
+      const res = await axios.put(
         `http://localhost:5000/api/committee/forms/${id}/review`,
         { action, reason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setForms(forms.filter((f) => f._id !== id));
+
+      if (res.data.success) {
+        alert(res.data.message);
+        setMedicalForms((prev) => prev.filter((f) => f._id !== id));
+      } else {
+        alert("Action failed: " + (res.data.error || "Unknown error"));
+      }
     } catch (err) {
-      console.error("Error reviewing form:", err);
+      console.error("Error reviewing medical form:", err);
       alert("Action failed. Please try again.");
     }
   };
 
-  // Filtering by student name, regNumber, or status
-  const filteredForms = forms.filter(
+  // Approve/Reject Leave
+  const handleLeaveAction = async (id, action) => {
+    if (!token) {
+      alert("Session expired. Please login again.");
+      return;
+    }
+
+    let reason = "";
+    if (action === "reject") {
+      reason = prompt("Enter reason for rejection:");
+      if (!reason) return;
+    }
+
+    try {
+      const res = await axios.put(
+        `http://localhost:5000/api/committee/leaveforms/${id}/review`,
+        { action, reason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data.success) {
+        alert(res.data.message);
+        setLeaveForms((prev) => prev.filter((f) => f._id !== id));
+      } else {
+        alert("Action failed: " + (res.data.error || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error reviewing leave form:", err);
+      alert("Action failed. Please try again.");
+    }
+  };
+
+  // Stats calculator
+  const calculateStats = (forms, type) => {
+    const stats = { approved: 0, rejected: 0, pending: 0 };
+    forms.forEach((f) => {
+      if (f.status === "committee_approved") stats.approved++;
+      else if (f.status === "committee_rejected") stats.rejected++;
+      else if (type === "medical" && f.status === "doctor_approved") stats.pending++;
+      else if (type === "leave" && f.status === "pending") stats.pending++;
+    });
+    return stats;
+  };
+
+  const medicalStats = calculateStats(medicalForms, "medical");
+  const leaveStats = calculateStats(leaveForms, "leave");
+
+  // Filtered lists
+  const filteredMedicalForms = medicalForms.filter((f) => {
+    const statusFilter = showRejectedMedical
+      ? f.status === "committee_rejected"
+      : f.status === "doctor_approved";
+    return (
+      statusFilter &&
+      (f.student?.name?.toLowerCase().includes(searchMedical.toLowerCase()) ||
+        f.student?.regNumber?.toLowerCase().includes(searchMedical.toLowerCase()) ||
+        f.subject?.name?.toLowerCase().includes(searchMedical.toLowerCase()))
+    );
+  });
+
+  const filteredLeaveForms = leaveForms.filter(
     (f) =>
-      f.student?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      f.student?.regNumber?.toLowerCase().includes(search.toLowerCase()) ||
-      (f.status || "").toLowerCase().includes(search.toLowerCase())
+      f.student?.name?.toLowerCase().includes(searchLeave.toLowerCase()) ||
+      f.student?.regNumber?.toLowerCase().includes(searchLeave.toLowerCase()) ||
+      (f.status || "").toLowerCase().includes(searchLeave.toLowerCase())
   );
 
-  // Statistics for PieChart
-  const stats = filteredForms.reduce(
-    (acc, f) => {
-      if (f.status === "committee_approved") acc.approved += 1;
-      else if (f.status === "committee_rejected") acc.rejected += 1;
-      else acc.pending += 1;
-      return acc;
-    },
-    { approved: 0, rejected: 0, pending: 0 }
-  );
-
-  const statsData = [
-    { name: "Approved", value: stats.approved },
-    { name: "Rejected", value: stats.rejected },
-    { name: "Pending", value: stats.pending },
-  ];
-
-  const COLORS = ["#4CAF50", "#F44336", "#FF9800"];
+  if (loading) return <p className="text-white text-center mt-10">Loading forms...</p>;
+  if (error) return <p className="text-red-400 text-center mt-10">{error}</p>;
 
   return (
-   <section className="min-h-screen flex flex-col items-center font-mono p-6 space-y-10">
-      <div className="w-full max-w-6xl bg-[#1e1e1e]/80 backdrop-blur-md rounded-xl shadow-xl p-8 overflow-x-auto">
-        <h1 className="text-3xl font-bold text-white mb-6 text-center">
-          Committee Panel
-        </h1>
-
-        {loading ? (
-          <p className="text-white text-center">Loading forms...</p>
-        ) : error ? (
-          <p className="text-red-400 text-center">{error}</p>
-        ) : (
-          <>
-            <div className="mb-4 flex justify-end">
-              <input
-                type="text"
-                placeholder="Search by Name / Index / Status..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="px-4 py-2 rounded-md text-black w-72"
-              />
-            </div>
-
-            <table className="min-w-full text-white text-left border border-white/20">
-              <thead className="bg-white/20 text-white">
-                <tr>
-                  <th className="py-3 px-4">Student Name</th>
-                  <th className="py-3 px-4">Index No</th>
-                  <th className="py-3 px-4">Email</th>
-                  <th className="py-3 px-4">Form</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredForms.map((f) => (
-                  <tr
-                    key={f._id}
-                    className="border-t border-white/20 hover:bg-white/10 transition"
-                  >
-                    <td className="py-3 px-4">{f.student?.name || "-"}</td>
-                    <td className="py-3 px-4">{f.student?.regNumber || "-"}</td>
-                    <td className="py-3 px-4">{f.student?.email || "-"}</td>
-                    <td className="py-3 px-4">
-                      <a
-                        href={`http://localhost:5000/${f.medicalSlip || ""}`}
-                        className="text-blue-300 underline hover:text-blue-500"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View Form
-                      </a>
-                    </td>
-                    <td className="py-3 px-4">{f.status || "Pending"}</td>
-                    <td className="py-3 px-4 space-x-2">
-                      {(f.status || "") === "doctor_validated" && (
-                        <>
-                          <button
-                            onClick={() => handleReview(f._id, "approve")}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleReview(f._id, "reject")}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        )}
+    <section className="min-h-screen p-6 space-y-10 font-mono">
+      {/* --- Stats Section --- */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-green-600/80 p-4 rounded-xl text-center text-white">
+          <h2 className="text-lg font-bold">Medical Approved</h2>
+          <p className="text-2xl">{medicalStats.approved}</p>
+        </div>
+        <div className="bg-red-600/80 p-4 rounded-xl text-center text-white">
+          <h2 className="text-lg font-bold">Medical Rejected</h2>
+          <p className="text-2xl">{medicalStats.rejected}</p>
+        </div>
+        <div className="bg-yellow-600/80 p-4 rounded-xl text-center text-white">
+          <h2 className="text-lg font-bold">Medical Pending</h2>
+          <p className="text-2xl">{medicalStats.pending}</p>
+        </div>
+        <div className="bg-blue-600/80 p-4 rounded-xl text-center text-white">
+          <h2 className="text-lg font-bold">Leave Approved</h2>
+          <p className="text-2xl">{leaveStats.approved}</p>
+        </div>
+        <div className="bg-purple-600/80 p-4 rounded-xl text-center text-white">
+          <h2 className="text-lg font-bold">Leave Rejected</h2>
+          <p className="text-2xl">{leaveStats.rejected}</p>
+        </div>
+        <div className="bg-orange-600/80 p-4 rounded-xl text-center text-white">
+          <h2 className="text-lg font-bold">Leave Pending</h2>
+          <p className="text-2xl">{leaveStats.pending}</p>
+        </div>
       </div>
 
-      {/* Statistics */}
-      <div className="w-full max-w-4xl bg-[#1e1e1e]/80 rounded-xl shadow-xl p-8 text-white">
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          Medical Requests Statistics
-        </h2>
-        <PieChart width={400} height={300}>
-          <Pie
-            data={statsData}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            outerRadius={100}
-            fill="#8884d8"
-            dataKey="value"
-            label
+      {/* --- Medical Forms --- */}
+      <div className="bg-[#1e1e1e]/80 rounded-xl shadow-xl p-6 overflow-x-auto">
+        <h1 className="text-3xl font-bold text-white mb-4 text-center">Medical Forms</h1>
+        <div className="mb-4 flex justify-between items-center">
+          <input
+            type="text"
+            placeholder="Search by Name / Index / Subject..."
+            value={searchMedical}
+            onChange={(e) => setSearchMedical(e.target.value)}
+            className="px-4 py-2 rounded-md text-black w-72"
+          />
+          <button
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
+            onClick={() => setShowRejectedMedical((prev) => !prev)}
           >
-            {statsData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            {showRejectedMedical ? "Show Approved" : "Show Rejected"}
+          </button>
+        </div>
+
+        <table className="min-w-full text-white text-left border border-white/20">
+          <thead className="bg-white/20">
+            <tr>
+              <th className="py-3 px-4">Student Name</th>
+              <th className="py-3 px-4">Index No</th>
+              <th className="py-3 px-4">Email</th>
+              <th className="py-3 px-4">Subject</th>
+              <th className="py-3 px-4">Status</th>
+              <th className="py-3 px-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredMedicalForms.map((f) => (
+              <tr key={f._id} className="border-t border-white/20 hover:bg-white/10">
+                <td className="py-3 px-4">{f.student?.name || "-"}</td>
+                <td className="py-3 px-4">{f.student?.regNumber || "-"}</td>
+                <td className="py-3 px-4">{f.student?.email || "-"}</td>
+                <td className="py-3 px-4">{f.subject?.name || "-"}</td>
+                <td className="py-3 px-4">{f.status}</td>
+                <td className="py-3 px-4 space-x-2">
+                  {f.status === "doctor_approved" && (
+                    <>
+                      <button
+                        onClick={() => handleMedicalAction(f._id, "approve")}
+                        className="bg-green-500 hover:bg-green-600 px-3 py-1 rounded-md text-sm"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleMedicalAction(f._id, "reject")}
+                        className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded-md text-sm"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
             ))}
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
+          </tbody>
+        </table>
+      </div>
+
+      {/* --- Leave Forms --- */}
+      <div className="bg-[#1e1e1e]/80 rounded-xl shadow-xl p-6 overflow-x-auto">
+        <h1 className="text-3xl font-bold text-white mb-4 text-center">Leave Requests</h1>
+        <div className="mb-4 flex justify-end">
+          <input
+            type="text"
+            placeholder="Search by Name / Index / Status..."
+            value={searchLeave}
+            onChange={(e) => setSearchLeave(e.target.value)}
+            className="px-4 py-2 rounded-md text-black w-72"
+          />
+        </div>
+
+        <table className="min-w-full text-white text-left border border-white/20">
+          <thead className="bg-white/20">
+            <tr>
+              <th className="py-3 px-4">Student Name</th>
+              <th className="py-3 px-4">Index No</th>
+              <th className="py-3 px-4">Email</th>
+              <th className="py-3 px-4">Status</th>
+              <th className="py-3 px-4">Actions</th>
+            </tr>3
+          </thead>
+          <tbody>
+            {filteredLeaveForms.map((f) => (
+              <tr key={f._id} className="border-t border-white/20 hover:bg-white/10">
+                <td className="py-3 px-4">{f.student?.name || "-"}</td>
+                <td className="py-3 px-4">{f.student?.regNumber || "-"}</td>
+                <td className="py-3 px-4">{f.student?.email || "-"}</td>
+                <td className="py-3 px-4">{f.status || "Pending"}</td>
+                <td className="py-3 px-4 space-x-2">
+                  {f.status === "pending" && (
+                    <>
+                      <button
+                        onClick={() => handleLeaveAction(f._id, "approve")}
+                        className="bg-green-500 hover:bg-green-600 px-3 py-1 rounded-md text-sm"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleLeaveAction(f._id, "reject")}
+                        className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded-md text-sm"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   );

@@ -1,19 +1,21 @@
 const express = require("express");
 const router = express.Router();
-const verifyToken = require("../middleware/authMiddleware");
+
+const authMiddleware = require("../middleware/authMiddleware");
+
 const {
-  committeeRegistration,
   getAllMedicalForms,
   reviewMedicalForm,
+  getLeaveForms,
+  reviewLeaveForm,
 } = require("../controllers/committeeController");
 
-// Register committee member
-router.post("/committee-registration", committeeRegistration);
+// ---------------- Medical Forms ----------------
+router.get("/forms", authMiddleware, getAllMedicalForms);                  // Get all medical forms
+router.put("/forms/:id/review", authMiddleware, reviewMedicalForm);     // Approve/Reject medical form
 
-// Get all medical forms
-router.get("/forms", verifyToken, getAllMedicalForms);
-
-// Approve/Reject form
-router.put("/forms/:id/review", verifyToken, reviewMedicalForm);
+// ---------------- Leave Forms ----------------
+router.get("/leaveforms", authMiddleware, getLeaveForms);               // Get all leave forms
+router.put("/leaveforms/:id/review", authMiddleware, reviewLeaveForm);  // Approve/Reject leave form
 
 module.exports = router;

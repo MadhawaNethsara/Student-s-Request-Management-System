@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/users");
 const MedicalForm = require("../models/MedicalForm");
+const LeaveForm = require("../models/LeaveForm");
 
 // Register a new student
 exports.studentRegistration = async (req, res) => {
@@ -16,7 +17,16 @@ exports.studentRegistration = async (req, res) => {
       semester,
     } = req.body;
 
-    if (!name || !registration_number || !email || !password || !contact_number || !degree || !level || !semester) {
+    if (
+      !name ||
+      !registration_number ||
+      !email ||
+      !password ||
+      !contact_number ||
+      !degree ||
+      !level ||
+      !semester
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -41,10 +51,17 @@ exports.studentRegistration = async (req, res) => {
 
     await newStudent.save();
 
-    res.status(201).json({ message: "Student registered successfully", student: newStudent });
+    res
+      .status(201)
+      .json({
+        message: "Student registered successfully",
+        student: newStudent,
+      });
   } catch (error) {
     console.error("Error in student registration[POST]:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
@@ -55,7 +72,9 @@ exports.getAllStudents = async (req, res) => {
     res.status(200).json(students);
   } catch (error) {
     console.error("Error fetching students[GET]:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
@@ -69,7 +88,9 @@ exports.getStudentById = async (req, res) => {
     res.status(200).json(student);
   } catch (error) {
     console.error("Error fetching student[GET]:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
@@ -83,21 +104,34 @@ exports.getLoggedInStudent = async (req, res) => {
     res.status(200).json(student);
   } catch (error) {
     console.error("Error fetching logged-in student[GET]:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
 // Update student
 exports.updateStudent = async (req, res) => {
   try {
-    const updatedStudent = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updatedStudent = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
     if (!updatedStudent || updatedStudent.role !== "student") {
       return res.status(404).json({ message: "Student not found" });
     }
-    res.status(200).json({ message: "Student updated successfully", student: updatedStudent });
+    res
+      .status(200)
+      .json({
+        message: "Student updated successfully",
+        student: updatedStudent,
+      });
   } catch (error) {
     console.error("Error updating student[PUT]:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
@@ -108,10 +142,17 @@ exports.deleteStudent = async (req, res) => {
     if (!deletedStudent || deletedStudent.role !== "student") {
       return res.status(404).json({ message: "Student not found" });
     }
-    res.status(200).json({ message: "Student deleted successfully", student: deletedStudent });
+    res
+      .status(200)
+      .json({
+        message: "Student deleted successfully",
+        student: deletedStudent,
+      });
   } catch (error) {
     console.error("Error deleting student[DELETE]:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
@@ -145,11 +186,27 @@ exports.submitMedicalForm = async (req, res) => {
 
     await medicalform.save();
 
-    res.status(201).json({ message: "Medical form submitted successfully", medicalform });
+    res
+      .status(201)
+      .json({ message: "Medical form submitted successfully", medicalform });
   } catch (error) {
     console.error("Error submitting medical form:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
-
+exports.submitLeave = async (req, res) => {
+  try {
+    const leave = new LeaveForm({
+      student: req.user._id,
+      ...req.body,
+      proofDoc: req.file?.path || "", // if file uploaded
+    });
+    await leave.save();
+    res.status(201).json({ success: true, leave });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

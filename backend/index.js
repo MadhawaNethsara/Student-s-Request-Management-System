@@ -54,7 +54,7 @@ app.use("/api/timetable", timetableRoutes);
 app.use("/api/db-test", dbTestRoutes);
 app.use("/api/medicalform", medicalFormRoutes);
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 const PORT = process.env.PORT || 5000;

@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const MedicalForm = require("../models/MedicalForm");
 const users = require("../models/users");
 const sendEmail = require("../utils/sendEmail");
+const LeaveForm = require("../models/LeaveForm");
 
 // 🔹 Committee Registration
 exports.committeeRegistration = async (req, res) => {
@@ -83,5 +84,30 @@ exports.reviewMedicalForm = async (req, res) => {
   } catch (error) {
     console.error("Error reviewing form:", error);
     res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+};
+
+exports.getLeaveForms = async (req, res) => {
+  try {
+    const forms = await LeaveForm.find().populate("student", "name regNumber email");
+    res.json({ success: true, forms });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.reviewLeaveForm = async (req, res) => {
+  const { action, reason } = req.body;
+  try {
+    const leave = await LeaveForm.findById(req.params.id);
+    if (!leave) return res.status(404).json({ success: false, message: "Leave form not found" });
+
+    leave.status = action === "approve" ? "committee_approved" : "committee_rejected";
+    if (action === "reject") leave.reason = reason;
+
+    await leave.save();
+    res.json({ success: true, leave });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };
