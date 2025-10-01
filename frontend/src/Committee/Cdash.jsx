@@ -11,6 +11,9 @@ function Cdash() {
   const [searchLeave, setSearchLeave] = useState("");
   const [showRejectedMedical, setShowRejectedMedical] = useState(false);
 
+  // --- NEW: State for viewing medical form ---
+  const [selectedMedicalForm, setSelectedMedicalForm] = useState(null);
+
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const token = storedUser.token;
 
@@ -215,6 +218,14 @@ function Cdash() {
                 <td className="py-3 px-4">{f.subject?.name || "-"}</td>
                 <td className="py-3 px-4">{f.status}</td>
                 <td className="py-3 px-4 space-x-2">
+                  {/* NEW: View button */}
+                  <button
+                    onClick={() => setSelectedMedicalForm(f)}
+                    className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-md text-sm"
+                  >
+                    View
+                  </button>
+
                   {f.status === "doctor_approved" && (
                     <>
                       <button
@@ -259,7 +270,7 @@ function Cdash() {
               <th className="py-3 px-4">Email</th>
               <th className="py-3 px-4">Status</th>
               <th className="py-3 px-4">Actions</th>
-            </tr>3
+            </tr>
           </thead>
           <tbody>
             {filteredLeaveForms.map((f) => (
@@ -291,6 +302,29 @@ function Cdash() {
           </tbody>
         </table>
       </div>
+
+      {/* --- Modal for Viewing Medical Form --- */}
+      {selectedMedicalForm && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-lg w-full relative">
+            <h2 className="text-xl font-bold mb-4">Medical Form Details</h2>
+            <p><strong>Name:</strong> {selectedMedicalForm.student?.name}</p>
+            <p><strong>Index No:</strong> {selectedMedicalForm.student?.regNumber}</p>
+            <p><strong>Email:</strong> {selectedMedicalForm.student?.email}</p>
+            <p><strong>Subject:</strong> {selectedMedicalForm.subject?.name}</p>
+            <p><strong>Status:</strong> {selectedMedicalForm.status}</p>
+            <p><strong>Reason:</strong> {selectedMedicalForm.reason || "N/A"}</p>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedMedicalForm(null)}
+              className="mt-4 bg-gray-700 text-white px-4 py-2 rounded-md hover:bg-gray-800"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
